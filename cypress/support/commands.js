@@ -23,12 +23,34 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-
+import { faker } from "@faker-js/faker";
 const loginPage = require("../fixtures/pages/loginPage.json");
 const generalElements = require("../fixtures/pages/general.json");
+const inviteeDashboardPage = require("../fixtures/pages/inviteeDashboardPage.json");
+const inviteeBoxPage = require("../fixtures/pages/inviteeBoxPage.json");
 
 Cypress.Commands.add("login", (userName, password) => {
-  cy.get(loginPage.loginField).type(userName);
-  cy.get(loginPage.passwordField).type(password);
+  cy.get(loginPage.loginField).clear().type(userName);
+  cy.get(loginPage.passwordField).clear().type(password);
   cy.get(generalElements.submitButton).click({ force: true });
 });
+
+Cypress.Commands.add("createCardMembership", () => {
+  let wishes = faker.word.noun() + faker.word.adverb() + faker.word.adjective();
+  cy.get(generalElements.submitButton).click();
+  cy.get(generalElements.arrowRight).click();
+  cy.get(generalElements.arrowRight).click();
+  cy.get(inviteeBoxPage.wishesInput).type(wishes);
+  cy.get(generalElements.arrowRight).click();
+  cy.get(inviteeDashboardPage.noticeForInvitee)
+    .invoke("text")
+    .then((text) => {
+      expect(text).to.contain("Это — анонимный чат с вашим Тайным Сантой");
+    });
+});
+Cypress.Commands.add("openWard", ()=> {
+cy.get(':nth-child(1) > .notifications-item__button > .btn-service').click();
+cy.contains('Жеребьевка проведена и у тебя появился подопечный').should("exist");
+cy.get('.btn-main').click();
+cy.get('.user-card').should("exist"); 
+})

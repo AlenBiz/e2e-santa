@@ -1,44 +1,36 @@
 const users = require("../fixtures/users.json");
+const userAdmin = require("../fixtures/useradminbox.json");
 const boxPage = require("../fixtures/pages/boxPage.json");
 const generalElements = require("../fixtures/pages/general.json");
 const dashboardPage = require("../fixtures/pages/dashboardPage.json");
 const invitePage = require("../fixtures/pages/invitePage.json");
-const inviteeBoxPage = require("../fixtures/pages/inviteeBoxPage.json");
-const inviteeDashboardPage = require("../fixtures/pages/inviteeDashboardPage.json");
 import { faker } from "@faker-js/faker";
 
 describe("user can create a box and run it", () => {
-  //пользователь 1 логинится
-  //пользователь 1 создает коробку
-  //пользователь 1 получает приглашение
-  //пользователь 2 переходит по приглашению
-  //пользователь 2 заполняет анкету
-  //пользователь 3 переходит по приглашению
-  //пользователь 3 заполняет анкету
-  //пользователь 4 переходит по приглашению
-  //пользователь 4 заполняет анкету
-  //пользователь 1 логинится
-  //пользователь 1 запускает жеребьевку
+
   let newBoxName = faker.word.noun({ length: { min: 5, max: 10 } });
-  let wishes = faker.word.noun() + faker.word.adverb() + faker.word.adjective();
+  let idBox = faker.word.noun({ length: { min: 5, max: 7 } });
   let maxAmount = 50;
   let currency = "Евро";
   let inviteLink;
 
   it("user logins and create a box", () => {
     cy.visit("/login");
-    cy.login(users.userAutor.email, users.userAutor.password);
+    cy.login(userAdmin.user.email, userAdmin.user.password);
     cy.contains("Создать коробку").click();
     cy.get(boxPage.boxNameField).type(newBoxName);
+    cy.log(newBoxName);
+    cy.get(boxPage.idBoxField).clear().type(idBox);
+    cy.log(idBox);
     cy.get(generalElements.arrowRight).click();
     cy.get(boxPage.sixthIcon).click();
     cy.get(generalElements.arrowRight).click();
     cy.get(boxPage.giftPriceToggle).check({ force: true });
     cy.get(boxPage.maxAnount).type(maxAmount);
     cy.get(boxPage.currency).select(currency);
-    cy.get(generalElements.arrowRight).click();
-    cy.get(generalElements.arrowRight).click();
-    cy.get(generalElements.arrowRight).click();
+    cy.get(generalElements.arrowRight).click({ force: true });
+    cy.get(generalElements.arrowRight).click({ force: true });
+    cy.get(generalElements.arrowRight).click({ force: true });
     cy.get(dashboardPage.createdBoxName).should("have.text", newBoxName);
     cy.get(".layout-1__header-wrapper-fixed .toggle-menu-item span")
       .invoke("text")
@@ -58,39 +50,59 @@ describe("user can create a box and run it", () => {
       });
     cy.clearCookies();
   });
-  it("approve as user1", () => {
-    cy.visit(inviteLink);
-    cy.get(generalElements.submitButton).click();
-    cy.contains("войдите").click();
-    cy.login(users.user1.email, users.user1.password);
-    cy.contains("Создать карточку участника").should("exist");
-    cy.get(generalElements.submitButton).click();
-    cy.get(generalElements.arrowRight).click();
-    cy.get(generalElements.arrowRight).click();
-    cy.get(inviteeBoxPage.wishesInput).type(wishes);
-    cy.get(generalElements.arrowRight).click();
-    cy.get(inviteeDashboardPage.noticeForInvitee)
-      .invoke("text")
-      .then((text) => {
-        expect(text).to.contain("Это — анонимный чат с вашим Тайным Сантой");
-      });
+
+  it("approve as users", () => {
+    users.forEach((item) => {
+      cy.visit(inviteLink);
+      cy.get(generalElements.submitButton).click();
+      cy.contains("войдите").click();
+      cy.login(item.user.email, item.user.password);
+      cy.contains("Создать карточку участника").should("exist");
+      cy.createCardMembership();
+      cy.clearCookies();
+    });
+  });
+  it("Conduct a draw", () => {
+    cy.visit("/login");
+    cy.login(userAdmin.user.email, userAdmin.user.password);
+    cy.contains("Коробки").click({ force: true });
+    cy.contains(newBoxName).click();
+    cy.contains("Перейти к жеребьевке").click({ force: true });
+    cy.contains("Жеребьевка").should("exist");
+    cy.get(".btn-main").click({ force: true });
+    cy.contains("Проведение жеребьевки").should("exist");
+    cy.get(".santa-modal_content_buttons > .btn-main").click({ force: true });
+    cy.contains("Жеребьевка проведена").should("exist");
     cy.clearCookies();
   });
+  it("Checking Notifications", () => {
+    users.forEach((item) => {
+      cy.visit("/login");
+      cy.login(item.user.email, item.user.password);
+      cy.contains('Уведомления').click({ force: true });
+      cy.contains(newBoxName).should("exist");
 
-  after("delete box", () => {
-    cy.visit("/login");
-    cy.login(users.userAutor.email, users.userAutor.password);
-    cy.get(
-      '.layout-1__header-wrapper-fixed > .layout-1__header > .header > .header__items > .layout-row-start > [href="/account/boxes"] > .header-item > .header-item__text > .txt--med'
-    ).click();
-    cy.get(":nth-child(1) > a.base--clickable > .user-card").first().click();
-    cy.get(
-      ".layout-1__header-wrapper-fixed > .layout-1__header-secondary > .header-secondary > .header-secondary__right-item > .toggle-menu-wrapper > .toggle-menu-button > .toggle-menu-button--inner"
-    ).click();
-    cy.contains("Архивация и удаление").click({ force: true });
-    cy.get(":nth-child(2) > .form-page-group__main > .frm-wrapper > .frm").type(
-      "Удалить коробку"
-    );
-    cy.get(".btn-service").click();
+      cy.openWard();
+      cy.clearCookies();
+    });
+  
+
+    });
+
+    after("delete box", () => {
+      cy.visit("/login");
+      cy.login(userAdmin.user.email, userAdmin.user.password);
+      cy.get(
+        '.layout-1__header-wrapper-fixed > .layout-1__header > .header > .header__items > .layout-row-start > [href="/account/boxes"] > .header-item > .header-item__text > .txt--med'
+      ).click();
+      cy.get(":nth-child(1) > a.base--clickable > .user-card").first().click();
+      cy.get(
+        ".layout-1__header-wrapper-fixed > .layout-1__header-secondary > .header-secondary > .header-secondary__right-item > .toggle-menu-wrapper > .toggle-menu-button > .toggle-menu-button--inner"
+      ).click();
+      cy.contains("Архивация и удаление").click({ force: true });
+      cy.get(":nth-child(2) > .form-page-group__main > .frm-wrapper > .frm").type(
+        "Удалить коробку"
+      );
+      cy.get(".btn-service").click();
+    });
   });
-});
