@@ -13,10 +13,9 @@ describe("user can create a box and run it", () => {
   let maxAmount = 50;
   let currency = "Евро";
   let inviteLink;
-  let cookie_connect_sid;
+  
 
   it("user logins and create a box", () => {
-    cy.clearCookies();
     cy.visit("/login");
     cy.login(userAdmin.user.email, userAdmin.user.password);
     cy.contains("Создать коробку").click();
@@ -24,9 +23,9 @@ describe("user can create a box and run it", () => {
     cy.log(newBoxName);
     cy.get(boxPage.idBoxField).clear().type(idBox);
     cy.log(idBox);
-    cy.get(generalElements.arrowRight).click();
-    cy.get(boxPage.sixthIcon).click();
-    cy.get(generalElements.arrowRight).click();
+    cy.get(generalElements.arrowRight).click({ force: true });
+    cy.get(boxPage.sixthIcon).click({ force: true });
+    cy.get(generalElements.arrowRight).click({ force: true });
     cy.get(boxPage.giftPriceToggle).check({ force: true });
     cy.get(boxPage.maxAnount).type(maxAmount);
     cy.get(boxPage.currency).select(currency);
@@ -87,31 +86,21 @@ describe("user can create a box and run it", () => {
       cy.clearCookies();
     });
   });
-  it('login', () => {
-    cy.api({ 
-      url: '/api/login',
-      failOnStatusCode: false,
-      method: 'POST',
-      body: {
-        email: userAdmin.user.email,
-        password: userAdmin.user.password
-        }
-      }).then((response) => {
-        expect(response.status).to.equal(200);
-      });
-    cy.getCookie('connect.sid').then((cook) => {
-      cookie_connect_sid = `${cook.name}=${cook.value}` 
-      });
-    });
-  it("delete box for API", () => {
-  cy.api({
-      metod: "DELETE",
-      headers: {
-        Cookie: cookie_connect_sid
-      },
-      url: `/api/box/${idBox}`
-    }).then( (response) => {
-      expect(response.status).to.equal(200); // 201
-});
+  after("delete box", () => {
+    cy.visit("/login");
+    cy.login(userAdmin.user.email, userAdmin.user.password);
+    cy.get(
+      '.layout-1__header-wrapper-fixed > .layout-1__header > .header > .header__items > .layout-row-start > [href="/account/boxes"] > .header-item > .header-item__text > .txt--med'
+    ).click({ force: true });
+    cy.get(":nth-child(1) > a.base--clickable > .user-card").first().click({ force: true });
+    cy.get(
+      ".layout-1__header-wrapper-fixed > .layout-1__header-secondary > .header-secondary > .header-secondary__right-item > .toggle-menu-wrapper > .toggle-menu-button > .toggle-menu-button--inner"
+    ).click();
+    cy.contains("Архивация и удаление").click({ force: true });
+    cy.get(":nth-child(2) > .form-page-group__main > .frm-wrapper > .frm").type(
+      "Удалить коробку"
+    );
+    cy.get(".btn-service").click();
   });
 });
+ 

@@ -5,7 +5,7 @@ const generalElements = require("../fixtures/pages/general.json");
 const dashboardPage = require("../fixtures/pages/dashboardPage.json");
 const invitePage = require("../fixtures/pages/invitePage.json");
 import { faker } from "@faker-js/faker";
-import '@bahmutov/cy-api'
+import "@bahmutov/cy-api";
 
 describe("user can create a box and run it", () => {
   let newBoxName = faker.word.noun({ length: { min: 5, max: 10 } });
@@ -16,7 +16,6 @@ describe("user can create a box and run it", () => {
   let cookie_connect_sid;
 
   it("user logins and create a box", () => {
-    cy.clearCookies();
     cy.visit("/login");
     cy.login(userAdmin.user.email, userAdmin.user.password);
     cy.contains("Создать коробку").click();
@@ -84,34 +83,35 @@ describe("user can create a box and run it", () => {
       cy.login(item.user.email, item.user.password);
       cy.contains("Уведомления").click({ force: true });
       cy.contains(newBoxName).should("exist");
+
+      cy.openWard();
       cy.clearCookies();
     });
   });
-  it('login', () => {
-    cy.api({ 
-      url: '/api/login',
+  after("delete box", () => {
+    cy.request({
+      url: "/api/login",
       failOnStatusCode: false,
-      method: 'POST',
+      method: "POST",
       body: {
         email: userAdmin.user.email,
-        password: userAdmin.user.password
-        }
-      }).then((response) => {
-        expect(response.status).to.equal(200);
-      });
-    cy.getCookie('connect.sid').then((cook) => {
-      cookie_connect_sid = `${cook.name}=${cook.value}` 
-      });
+        password: userAdmin.user.password,
+      },
+    }).then((response) => {
+      expect(response.status).to.equal(200);
     });
-  it("delete box for API", () => {
-  cy.api({
+    cy.getCookie("connect.sid").then((cook) => {
+      cookie_connect_sid = `${cook.name}=${cook.value}`;
+    });
+
+    cy.request({
       metod: "DELETE",
       headers: {
-        Cookie: cookie_connect_sid
+        Cookie: cookie_connect_sid,
       },
-      url: `/api/box/${idBox}`
-    }).then( (response) => {
+      url: `/api/box/${idBox}`,
+    }).then((response) => {
       expect(response.status).to.equal(200); // 201
-});
+    });
   });
 });
