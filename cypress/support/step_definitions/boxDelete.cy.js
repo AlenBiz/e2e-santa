@@ -1,12 +1,18 @@
-const userAdmin = require("../fixtures/useradminbox.json");
-describe("delete box", () => {
-  it("delete", () => {
-    cy.visit("/login");
+const userAdmin = require("../../fixtures/useradminbox.json");
+const { Given, Then } = require("@badeball/cypress-cucumber-preprocessor");
+
+
+Given ("Login", () => {
+  cy.visit("/login");
     cy.login(userAdmin.user.email, userAdmin.user.password);
-    
-    cy.get(
-      '.layout-1__header-wrapper-fixed > .layout-1__header > .header > .header__items > .layout-row-start > [href="/account/boxes"] > .header-item > .header-item__text > .txt--med'
-    ).click();
+})
+
+  Given("Delete box", () => {
+
+  cy.visit("/account/boxes");
+    // cy.get(
+    //   '.layout-1__header-wrapper-fixed > .layout-1__header > .header > .header__items > .layout-row-start > [href="/account/boxes"] > .header-item > .header-item__text > .txt--med'
+    // ).click();
     cy.get(":nth-child(1) > a.base--clickable > .user-card").first().click();
     cy.get(
       ".layout-1__header-wrapper-fixed > .layout-1__header-secondary > .header-secondary > .header-secondary__right-item > .toggle-menu-wrapper > .toggle-menu-button > .toggle-menu-button--inner"
@@ -17,4 +23,3 @@ describe("delete box", () => {
     );
     cy.get(".btn-service").click();
   });
-});
